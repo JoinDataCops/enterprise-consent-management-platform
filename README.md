@@ -1,124 +1,254 @@
 # Enterprise consent management platform
 
-IAB TCF v2.3 became mandatory on February 28, 2026. I watched [enterprise](/enterprise) privacy teams treat that deadline like a finish line - pick a certified CMP, ship the banner, file the compliance checkbox, move on. The deadline was not a finish line. It was the easy half of the job, and the half most CMP buyers never get to is where the money actually leaks.
+The enterprise CMP market in 2026 is mid-consolidation and mid-repricing. Didomi swallowed Sourcepoint in July 2025 and Addingwell in April 2025. Usercentrics swallowed Cookiebot in 2021 and acquired MCP Manager in January 2026 to govern AI-agent traffic. OneTrust raised the floor to $10,000 per year minimum in Q2 2026 and switched from per-site to per-visitor pricing, producing renewal quotes 10x previous for mid-market customers.
 
-Here is the lie baked into every "best **enterprise CMP**" comparison page. They all stop at the same place: banner customization, TCF certification, multi-region templates, integration count. As if the job of a [consent](/first-party-consent-manager-platform) management platform is to collect a click and store it.
+Three forcing functions hit every enterprise buyer this year. TCF v2.3 deadline February 28, 2026, with invalid TC strings now treated as Limited Ads in Google and reported 60-80% CPM reductions. Google's silent tightening of Consent Mode v2 enforcement on EEA/UK traffic in July 2025 broke remarketing and conversion tracking for unprepared accounts. CNIL hit Google with EUR 325M and Shein with EUR 150M in September 2025, specifically for consent-banner dark patterns and tracking-before-consent.
 
-Collecting consent is step one. Enforcing it is step two. And almost nothing on the market does step two - actually making sure that when a user clicks Reject All, their data does not still get fired to [Meta](/meta-conversion-api) [CAPI](/conversion-api) and [Google](/google-conversion-api) Ads on the server side, where no banner can see it.
+Gartner-cited CPM market end-user spend reached $509M in 2024, +27% YoY, projected >20% YoY for the next five years (per Syrenis). Allied Market Research: over 80% of North American and European enterprises had a CMP deployed by 2024. Usercentrics ARR crossed EUR 100M in August 2025, +45% YoY.
 
-This is not a "rip out [OneTrust](/alternative/onetrust-alternative)" post. A certified banner CMP is necessary. This is a post about the last mile every enterprise CMP leaves unbuilt - outbound consent enforcement on server-side ad-platform calls. DataCops is that enforcement layer. It pairs with whatever banner CMP you already run; it does not replace it.
+The top-ranking enterprise CMP comparison pages stop at TCF certification, regions covered, and banner branding flexibility. None of them treat the layer where the 2025-2026 fines actually landed: enforcement on outbound CAPI and server-side ad calls. Practitioners on the Stape forum and DEV Community describe the same leak in plain language. The front-end CMP correctly blocks the Pixel when the user clicks reject all. The backend keeps firing CAPI events to Meta, Google, TikTok, and LinkedIn because the server-side container never read the consent state. CNIL's September 2025 fines targeted that exact gap.
 
+This piece treats banner CMP and consent enforcement as two separate evaluation axes. Names the consolidation events plainly. Maps TCF 2.3 to actual revenue impact. And frames where a CMP-neutral enforcement layer fits underneath any banner you keep.
 
-
-
+---
 
 ## Quick stuff people keep asking
 
-**What is an enterprise consent management platform?** A platform that collects, stores, and signals user consent for data processing at scale - multi-domain, multi-region, multi-language, with audit trails and regulatory templates. It manages the consent record. Whether anything downstream obeys that record is a separate question, and usually a separate product.
+**What is an enterprise consent management platform?** A CMP collects user consent on the front end (banner, preferences center, TCF strings). An enterprise CMP additionally handles multi-region compliance, multi-brand governance, vendor disclosure (TCF 2.3 disclosedVendors), data subject rights workflows, and sometimes data mapping and DPIA tooling. OneTrust, Didomi, Usercentrics, Cookiebot, and TrustArc are the core five.
 
-**What is the best CMP for enterprises?** For the banner-and-record job, OneTrust and Didomi lead, with Sourcepoint strong in ad-tech. But "best CMP" answers the collection question only. If your real exposure is unconsented data reaching ad platforms, the best banner CMP in the world does not close it.
+**What is the best CMP for enterprises?** Depends on the procurement angle. Big legal team buying privacy-platform breadth: OneTrust, but read the Q2 2026 pricing changes. CMP plus server-side tagging from one consolidating vendor: Didomi (now bundling Sourcepoint and Addingwell). High-volume web with TCF certification: Usercentrics or Cookiebot (same parent). Independent boutique: Sourcepoint, but evaluating Sourcepoint in 2026 means evaluating Didomi.
 
-**How much does OneTrust cost?** Enterprise contracts, custom-quoted, typically five to six figures annually depending on modules, domains, and data-mapping scope. There is no meaningful public price. If consent banners are one line in a broader privacy-platform deal, the number climbs fast.
+**How much does OneTrust cost?** Q2 2026 minimum contract is $10,000 per year. Enterprise tier (5,000+ employees) typically $120K-$500K+ per year (per Vendr/Enzuzo). The Q2 pricing model switched from per-site to per-visitor, producing renewal quotes 10x previous for mid-market customers.
 
-**Is [Cookiebot](/alternative/cookiebot-alternative) enterprise-grade?** Cookiebot ([Usercentrics](/alternative/usercentrics-alternative)) scales into enterprise and is TCF-certified, with strong automatic cookie scanning. For pure banner-and-scan it holds up. It is still a collection tool - it governs the client-side script layer, not your server-side CAPI calls.
+**Is Cookiebot enterprise-grade?** Cookiebot is the SMB-and-mid-market self-serve product under Usercentrics. Usercentrics is the enterprise product. Same parent, two sales motions, three pricing models. G2 ranked them 5th and 7th separately in the 2026 Data Privacy Best Software Awards.
 
-**What is Google Consent Mode v2?** A Google framework where your site passes consent state to Google tags, and Google adjusts behavior - modeling conversions when consent is absent. It is a signaling protocol. It depends entirely on your CMP passing accurate signals, and it does not police non-Google server-side calls at all.
+**What is Google Consent Mode v2?** A signaling protocol where your CMP communicates the user's consent state to Google's tags. Mandatory for EEA traffic since March 2024. Google silently tightened enforcement on July 21, 2025, and accounts without correct signals lost remarketing, conversion tracking, and audience modelling. June 2026 Google is unifying consent control across all Ads data products.
 
-**Do I need a CMP for GDPR?** If you process EU personal data for marketing, practically yes - you need to collect and prove consent. But a CMP alone does not make you compliant. Compliance is whether your data processing actually matches the consent collected. That is enforcement, and it is where audits find the gaps.
+**Do I need a CMP for GDPR?** Yes, if you serve EU traffic and use any non-essential cookies or trackers. The 2018 baseline. The 2026 update: a CMP that collects consent in the browser but doesn't enforce it on outbound CAPI/server-side calls is the legal exposure point. CNIL fines in September 2025 (EUR 325M Google, EUR 150M Shein) targeted exactly that gap.
 
-**What is the difference between a CMP and a privacy platform?** A CMP handles consent collection and signaling. A privacy platform (the broader OneTrust-style suite) adds data mapping, DSAR automation, vendor risk, assessments. Neither, by default, enforces consent on the outbound CAPI calls leaving your servers.
+**What is the difference between a CMP and a privacy platform?** A CMP collects and stores consent. A privacy platform additionally handles data mapping, DSAR fulfillment, vendor risk, breach response, DPIAs. OneTrust and TrustArc are full privacy platforms. Didomi is moving that direction. Usercentrics, Cookiebot, CookieYes, Osano, Enzuzo are mostly CMP-only.
 
-## The gap - consent collected, consent ignored
+---
 
-Picture the real data flow in an enterprise marketing stack. A user lands on your site. Your CMP banner loads and asks for consent. They click Reject All. Your CMP records it. Compliant so far.
+## Tier 1: enterprise privacy platforms
 
-Now the data keeps moving. Your server-side tag manager, your CAPI integrations, your conversion pipelines - they fire from server infrastructure, not the browser. The banner cannot reach them. Unless something actively reads that "rejected" consent state and blocks the outbound call, the event still goes to Meta CAPI. Still goes to Google Ads. The user said no; your servers said yes anyway.
+Deepest scope. Banner CMP plus data mapping plus DSAR plus vendor risk. Built for legal/privacy teams at Fortune 500 procurement. Pricing starts at five figures and goes high.
 
-This is the gap. The CMP did its job - it collected and stored the consent. Nothing downstream was built to obey it. And the layers underneath make it worse.
+**1. OneTrust**
 
-The CMP banner is itself a third-party script. uBlock and Brave block it on **30 to 40%** of privacy-conscious sessions. On single-page apps it races the page render - events fire before the consent banner has resolved. So even your client-side consent state is unreliable before the server-side problem begins.
+The Good: deepest privacy platform on the market. End-to-end from consent to data mapping to DSAR fulfillment. MRC and TCF certifications across the board. Trusted-by-default vendor when running global brand budgets.
 
-And here is the part enterprise privacy teams systematically miss: Reject All does not mean no data. Anonymous session analytics - page views with no personal identifiers, aggregate counts - are legal under GDPR without consent. Most CMP-driven stacks throw that away on rejection out of caution, then separately leak identifiable data server-side because nothing enforced the rejection there. Exactly backwards. You discard the legal data and forward the illegal data.
+Frustrations: Q2 2026 raised the floor to $10K/year minimum and switched from per-site to per-visitor pricing, producing 10x renewal quotes. Reddit r/cipp threads describe support as slow and the UI as a cockpit without a flight manual. Customers on r/gdpr report sales calls disclosing >1000% price increases just before renewal. r/privacy users complained the consent banner showed toggles where every option was Always Active, a UX that implies choice while cookies were not actually blocked.
 
-Then the fraud layer. Of the traffic hitting your site, **24 to 31%** is bots. PillarlabAI ran a honeypot signup flow: 3,000 signups, **77%** fraudulent, 650 accounts on a single device fingerprint. Your CMP has no opinion on any of this - it manages consent strings, not traffic legitimacy. So your server-side pipeline is forwarding a blend of unconsented human data and bot data to Meta, and your ad algorithm is being trained on both. Garbage in, garbage optimized, ROAS out.
+Wish List: published mid-market pricing. Faster onboarding without a 6-12 week implementation. UI consolidation.
 
-The fix is not a better banner. The architecture has to change at the point data leaves your infrastructure. Server-side enforcement that reads consent state and gates the outbound CAPI call. Two data tiers separated at source: anonymous analytics that flow unconditionally because they are always legal, and identifiable events that wait for real, verified consent. Bot filtering at ingestion so contaminated traffic never reaches the ad platform regardless of consent. That is the consent enforcement layer. That is DataCops - and it sits behind your existing CMP, not in place of it.
+Value for Money: **6.5/10.** Best-in-class if you have a privacy office and a six-figure compliance budget. Painful otherwise.
 
-## How the layers fit - CMP plus enforcement
+Pricing: $10K/year minimum (Q2 2026), enterprise tier $120K-$500K+/year for 5,000+ employee orgs. Switched to per-visitor billing.
 
-A clean enterprise consent stack has two parts, and most teams only buy one.
+---
 
-**The banner CMP - collection.** OneTrust, Didomi, Sourcepoint, Cookiebot, Ethyca. This layer collects consent, stores the record, signals state via Google Consent Mode and TCF strings, scans cookies, and produces the audit trail. You need this. It is the legal front door.
+**2. TrustArc**
 
-### DataCops - enforcement
+The Good: long-running privacy platform, strong on assessments, DPIAs, and TRUSTe certification heritage. Comprehensive workflow tooling. Trusted procurement vendor.
 
-This layer sits server-side and does what the banner cannot reach. It reads the consent state your CMP collected and enforces it on outbound CAPI calls to Meta, Google, TikTok, and LinkedIn - unconsented identifiable events do not leave. It runs first-party on your own subdomain, splits data into the two tiers (anonymous unconditional, identifiable consent-gated), and filters bots at ingestion against a 361.8 billion-plus IP database so fraud never reaches the ad platform. It is not a banner. It will not scan your cookies or render your consent UI - keep your CMP for that. Honest limits: DataCops is a newer brand than OneTrust, and SOC 2 Type II is in progress, not complete, which a hard-gated procurement process should know up front. Shared CAPI across platforms is in verification. DataCops surfaces fraud context for your decisions; it does not claim to block **100%** of fraud. Free tier covers 2,000 signup verifications a month.
+Frustrations: feature velocity slower than OneTrust and Didomi in the last 24 months. UI dated relative to peers. Pricing opaque, similar enterprise sales motion.
 
-## The enterprise CMP field - what each one is for
+Wish List: faster product iteration on consent enforcement (server-side gates). Better TCF 2.3 documentation.
 
-**OneTrust.**
+Value for Money: **6.5/10.** Solid privacy-platform pick if OneTrust feels overweight, less momentum into 2026.
 
-**What it is:** the most widely deployed enterprise privacy platform, with the CMP as one module of many.
+Pricing: custom enterprise quotes, similar order of magnitude to OneTrust.
 
-**What it does well:** enormous regulatory template library, deep data-mapping and DSAR tooling, the procurement-safe default for a large regulated enterprise. Where it stops: it is a collection and governance platform. It signals consent; it does not sit server-side enforcing that signal on your CAPI calls. The last mile is yours to build or to pair.
+---
 
-**Value for money:** 7/10 for a large enterprise that needs the full privacy suite, lower if you only wanted a banner.
+## Tier 2: enterprise CMPs (banner-first, deep CMP scope)
 
-**Didomi.**
+Focused on consent collection at scale. Multi-region, TCF 2.3, multi-brand. Less full-stack than OneTrust/TrustArc, more focused execution on the banner job.
 
-**What it is:** an enterprise CMP strong in multi-region and multi-brand consent orchestration.
+**3. Didomi**
 
-**What it does well:** clean preference management, solid TCF support, genuinely good at the multi-brand pattern where one enterprise runs many properties. Where it stops: same structural line - Didomi collects and orchestrates consent beautifully and still hands enforcement of server-side ad calls to whatever you put downstream.
+The Good: TCF 2.3 ready, multi-region, strong publisher footprint. Acquired Sourcepoint in July 2025 and Addingwell in April 2025, putting CMP plus server-side tagging plus AdTech vendor relationships under one roof. Marlin Equity took $83M majority stake. CEO Romain Gauthier publicly stated a 2-year unified-platform integration timeline.
 
-**Value for money:** 7/10 for multi-brand enterprises.
+Frustrations: post-acquisition integration is on a 2-year timeline. Buyers signing in 2026 are buying a roadmap, not a finished product. Pricing opaque after the audit step. Multiple SKUs to navigate (Didomi + Sourcepoint + Addingwell).
 
-**Sourcepoint.**
+Wish List: clearer SKU map. Self-serve mid-market tier. Faster TCF 2.3 publisher tooling.
 
-**What it is:** a CMP with deep roots in the ad-tech and publishing world.
+Value for Money: **7/10.** Best pick if you want CMP plus sGTM from one vendor and can wait out the integration.
 
-**What it does well:** sophisticated handling of TCF, ad-revenue-sensitive consent flows, and adblock-recovery messaging - built by people who understand the ad-funded web. Where it stops: it optimizes the consent transaction at the banner. The server-side enforcement of that consent on outbound CAPI is outside its frame.
+Pricing: custom enterprise quotes. Mid-market reportedly starts around $20K/year.
 
-**Value for money:** 7/10 for publishers and ad-tech-heavy enterprises.
+---
 
-**Cookiebot (Usercentrics).**
+**4. Sourcepoint (now Didomi)**
 
-**What it is:** a TCF-certified CMP with best-in-class automatic cookie scanning, scaling from mid-market into enterprise.
+The Good: historically strong on publisher and CTV consent, around 200 enterprise customers at acquisition. Best-in-class TCF tooling for ad-tech publishers.
 
-**What it does well:** continuous cookie and tracker discovery, fast deployment, clean compliance reporting. Where it stops: it governs the client-side script layer. It cannot see or gate a server-side CAPI call, and on SPA-heavy sites the script-load race condition still bites.
+Frustrations: as of July 2025 this is Didomi. Independent product decisions paused. Buyers in 2026 are evaluating Didomi's integration roadmap.
 
-**Value for money:** 7/10, strong for scanning-led compliance.
+Wish List: clarity on which Sourcepoint features survive the merger.
 
-**Ethyca.**
+Value for Money: **6.5/10.** Name this honestly on any comparison page.
 
-**What it is:** a developer-first privacy platform with strong data-mapping and consent-as-infrastructure positioning.
+Pricing: rolled into Didomi quotes.
 
-**What it does well:** API-driven, integrates consent into engineering workflows, good for organizations that treat privacy as code. Where it stops: even with its developer focus, it is a consent and data-mapping layer - it does not natively enforce consent on the outbound ad-platform calls leaving your servers.
+---
 
-**Value for money:** 6/10, best for engineering-led privacy orgs.
+**5. Usercentrics**
 
-I am not going to bolt a DataCops pivot onto every entry. These five are good at collecting and governing consent. The honest point is narrower: not one of them closes the server-side enforcement gap, because that was never their job. That is the case for pairing, not replacing.
+The Good: TCF 2.3 ready, EUR 100M+ ARR (Aug 2025), New York office for US expansion. January 2026 acquired MCP Manager to extend into AI-agent traffic governance, the first major CMP to push into Model Context Protocol consent.
 
-## Decision guide
+Frustrations: V2 to V3 migration most customers haven't completed. Bleech.de measured Lighthouse 60 to 99 after removing the V2 widget. Capterra reviewers describe session-based pricing as impossible to estimate. Trustpilot users describe surprise billing tied to scanner over-counting. Cookiebot active domains fell 13% from April to July 2025.
 
-Large regulated enterprise that needs the full privacy suite - DSAR, data mapping, vendor risk - OneTrust.
+Wish List: published session-based pricing examples. Faster V2 migration tooling.
 
-Multi-brand enterprise running many properties under one consent strategy - Didomi.
+Value for Money: **7/10.** Strong on TCF 2.3 and AI-agent governance roadmap. Pricing predictability is the ongoing complaint.
 
-Publisher or ad-tech-heavy business where consent and ad revenue are tightly coupled - Sourcepoint.
+Pricing: custom enterprise. Cookiebot SMB tier from ~$15-30/month.
 
-You mainly need certified banners plus relentless cookie scanning - Cookiebot.
+---
 
-Engineering-led org that wants consent managed as code - Ethyca.
+**6. Cookiebot (by Usercentrics)**
 
-You already have a certified banner CMP and your exposure is unconsented or bot data reaching Meta and Google server-side - add DataCops as the enforcement layer behind it.
+The Good: easy self-serve, TCF certified, strong WordPress and ecommerce integration. Mid-market sweet spot before the Q2 pricing reshuffle elsewhere.
 
-## You bought a lock. You never checked the back door.
+Frustrations: same parent as Usercentrics, dual product confusion. Mid-2025 Premium pricing increase, then 13% active-domain drop from April to July 2025. Independent audits (Nixon Digital) argue default installs miss script blocking and Consent Mode v2 signal mapping.
 
-The mistake I see enterprise privacy teams make is treating CMP selection as the whole consent project. They run a careful vendor evaluation, pick a certified banner, ship it, and consider consent solved. They bought a very good lock for the front door.
+Wish List: clearer differentiation from Usercentrics. Server-side enforcement.
 
-Meanwhile the back door - your server-side CAPI pipeline - is wide open. It fires conversions to Meta and Google whether the user consented or not, because the banner CMP was never architecturally able to reach it. An auditor who follows the data, not the banner, finds that gap fast.
+Value for Money: **6.5/10.** Solid for mid-market, becoming less of a deal post-pricing change.
 
-So here is the audit to run this week. Take a session that clicked Reject All. Trace it all the way through your server-side stack. Did a single identifiable event still reach Meta CAPI or Google Ads? If you cannot answer that with certainty, you do not have a consent management problem. You have a consent enforcement problem, and no banner you can buy was ever going to fix it.
+Pricing: from ~EUR 15/mo Basic, EUR 79/mo Premium, custom enterprise.
+
+---
+
+## Tier 3: mid-market CMPs that compete on price and clarity
+
+**7. CookieYes**
+
+The Good: clean UI, fast setup, TCF 2.2 certified. Strong WordPress integration. Self-serve pricing genuinely under $20/mo for small sites.
+
+Frustrations: weaker on enterprise multi-brand governance. Server-side enforcement is DIY. Independent audits flag default Consent Mode v2 mappings.
+
+Wish List: server-side consent enforcement on outbound CAPI. First-party CNAME option.
+
+Value for Money: **7/10.** Solid SMB pick. Outgrows fast.
+
+Pricing: from $10/mo Basic, $30/mo Pro, custom enterprise.
+
+---
+
+**8. Osano**
+
+The Good: strong on US privacy laws (CCPA, CPRA, the patchwork). Easy onboarding. Free tier exists for the smallest sites. Active on the OneTrust-displacement narrative.
+
+Frustrations: weaker on TCF 2.3 versus European-rooted CMPs. UI clean but feature depth shallow on enterprise multi-brand.
+
+Wish List: TCF 2.3 parity. Server-side gate.
+
+Value for Money: **7/10.** Strong choice for US-first companies.
+
+Pricing: free tier, then $99/mo, custom enterprise.
+
+---
+
+**9. Enzuzo**
+
+The Good: ecommerce-focused, strong Shopify integration, fair transparent pricing. Active on the OneTrust-displacement narrative. Publishes pricing comparison content that names the OneTrust Q2 2026 pricing changes plainly.
+
+Frustrations: smaller R&D budget than the leaders. Feature velocity slower. Less established for non-ecommerce verticals.
+
+Wish List: bigger TCF 2.3 commitment. Native CAPI consent gate.
+
+Value for Money: **6.5/10.** Solid for Shopify and DTC.
+
+Pricing: from $9/mo to $499/mo on transparent tiers.
+
+---
+
+**10. Ethyca**
+
+The Good: developer-first privacy stack, strong on data mapping integration, open-source-roots. Modern API surface. Integrates well with engineering teams that already run their own data infrastructure.
+
+Frustrations: smaller install base than the leaders. UI less polished for non-technical privacy teams. Less brand recognition in procurement.
+
+Wish List: better non-engineer dashboard. More TCF 2.3 documentation.
+
+Value for Money: **7/10.** Right pick for engineering-led privacy stacks.
+
+Pricing: custom, mid-market and up.
+
+---
+
+**11. Secure Privacy**
+
+The Good: TCF 2.2 certified, strong on multi-language banners, fair pricing for European SMB-mid-market.
+
+Frustrations: smaller brand recognition. Documentation thinner than peers.
+
+Wish List: TCF 2.3 publisher tooling. Server-side enforcement.
+
+Value for Money: **6.5/10.** Reasonable pick for European mid-market.
+
+Pricing: from EUR 10/mo to custom enterprise.
+
+---
+
+## Tier 4: trust infrastructure (the consent enforcement layer most pages skip)
+
+This is the layer where 2025-2026 fines actually landed. CMP collects consent in the browser. Enforcement layer ensures only consented events reach ad platforms via server-side CAPI calls.
+
+**12. DataCops**
+
+Not a like-for-like OneTrust swap. Not a Didomi competitor on data mapping. The CMP-neutral enforcement layer that pairs with any banner CMP and closes the gap CNIL has been fining since September 2025.
+
+The Good: first-party CMP runs on a CNAME on your own subdomain (datacops.yourdomain.com), so the consent state lives where the rest of your trust stack lives. TCF 2.2 certified. Bundles consent with first-party analytics, server-side CAPI to Meta, Google, TikTok, LinkedIn, signup fraud detection, and bot filtering. The same consent state that the banner collects gates the outbound CAPI calls. Fraud-filtered consent signals (don't honor consent from bots). 361B+ IP database powers the fraud filter and the consent signal hygiene. Setup 5 to 30 minutes (paste a script, add a CNAME). Free tier is real, no card, 2,000 sessions/mo.
+
+Frustrations: SOC 2 Type II is in progress, not done. Google Consent Mode v2 enforcement is in progress. ISO 27001 and SSO/SAML are planned. Brand recognition smaller than OneTrust or Usercentrics. Not a full privacy platform: no data mapping, no DSAR workflow engine, no vendor risk assessments. The Enterprise page lists every gap in plain language.
+
+Wish List: SOC 2 Type II. SSO/SAML. DSAR API plus downstream deletion (Meta, Google).
+
+Value for Money: **8.5/10.** Right answer if you want to collapse banner CMP, CAPI consent gate, fraud filtering, and first-party analytics into one vendor without a six-figure procurement cycle.
+
+Pricing: Basic free (2K sessions), Growth $7.99/mo (5K sessions), Business $49/mo (50K sessions, HubSpot integration), Organization $299/mo (300K sessions), Enterprise talk to sales (dedicated environment, dedicated IP database, custom DPA, EU/US residency).
+
+---
+
+## So what should you actually use?
+
+Want the deepest enterprise privacy platform with full data mapping and DSAR workflow? Try OneTrust. Budget for the Q2 2026 pricing reshuffle.
+
+Want a privacy-platform alternative with TRUSTe certification heritage? Try TrustArc.
+
+Want CMP plus server-side tagging plus AdTech vendor relationships from one consolidating vendor? Try Didomi. Accept a 2-year integration roadmap.
+
+Want TCF 2.3 plus AI-agent governance roadmap? Try Usercentrics. Predictability is the ongoing pain.
+
+Want cheap and fast banner-only with TCF 2.2? Try CookieYes or Cookiebot (until pricing changes settle).
+
+Want US-first privacy law coverage? Try Osano.
+
+Want Shopify-native pricing transparency? Try Enzuzo.
+
+Want developer-first privacy stack? Try Ethyca.
+
+Want the consent enforcement layer underneath whatever banner you pick, plus CAPI gating, plus fraud filtering, plus first-party analytics, all on one CNAME at SMB pricing? Try DataCops underneath.
+
+---
+
+## The mistake I see people make
+
+Treating CMP selection as the entire compliance job. The banner is half the job. Enforcement is the other half. CNIL fined Google EUR 325M and Shein EUR 150M in September 2025 specifically because the banner UI implied choice while tracking continued. The leak is server-side. CAPI calls keep firing because the back-end pipeline never read the consent state. A CMP that does not enforce consent on outbound server events is increasingly the legal exposure point in 2026, not the banner.
+
+The practitioner reality on Stape forums and DEV Community: front-end CMP correctly blocks the Pixel. Backend keeps firing CAPI events to Meta, Google, TikTok, LinkedIn because the server-side container never read the consent state. The single most common 2025-2026 misconfiguration in enterprise stacks. TCF 2.3 (Feb 28, 2026 deadline) makes it worse: invalid TC strings get treated as Limited Ads, with reported 60-80% CPM cuts.
+
+The fix is not a different banner. It is an enforcement layer that gates the same pipeline that fires the server events on the consent the banner collects.
+
+---
+
+## Now your turn
+
+If you run an enterprise CMP today, do you know whether your CAPI events are gated on the consent state your banner collects, or do they fire regardless?
 
 ---
 
